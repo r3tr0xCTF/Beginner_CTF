@@ -1,0 +1,17 @@
+Overview
+Multi-layered binary challenge featuring three progressive "wall" defenses that must be breached using titan knowledge and reverse engineering skills. Players must identify the correct titan names to unlock each layer and reveal the final flag.
+Features
+
+Anti-debugging measures: ptrace detection, timing analysis, environment checks
+Multiple encryption schemes: Position-based XOR, reverse array processing, multi-key encryption
+Anti-static analysis: Runtime string construction to hide flag from strings command
+Thematic integration: Attack on Titan storyline with authentic character references
+Progressive difficulty: Three distinct challenges with increasing complexity.
+
+Skills Demonstrated
+
+Binary reverse engineering and static analysis
+Multi-layer cryptographic decryption
+Anti-debugging bypass techniques
+Domain-specific knowledge application
+Memory analysis and dynamic debugging
