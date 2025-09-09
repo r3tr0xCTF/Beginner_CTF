@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge: Advanced Incident Response</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #2c1810, #1a0f0a);
+            color: #ff9500;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 10, 5, 0.9);
+            border: 2px solid #ff9500;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #ff9500;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .challenge-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #ff9500;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .log-viewer {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 2px solid #ff9500;
+            margin: 20px 0;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .tools-section {
+            background: rgba(50, 25, 0, 0.3);
+            border-left: 4px solid #ff9500;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            align-items: center;
+        }
+        
+        .advanced-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .tool-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ff9500;
+        }
+        
+        .hint {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .solution {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff6666;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff9500, #ff7700);
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 2px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: linear-gradient(45deg, #ff7700, #ff9500);
+            box-shadow: 0 0 10px rgba(255, 149, 0, 0.5);
+        }
+        
+        input[type="text"], select, textarea {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #ff9500;
+            color: #ff9500;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+        
+        .flag-input {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #ff9500;
+        }
+        
+        .suspicious {
+            background-color: rgba(255, 0, 0, 0.2) !important;
+            border-left: 3px solid #ff0000 !important;
+        }
+        
+        .highlight {
+            background-color: rgba(255, 255, 0, 0.3);
+            padding: 2px;
+            border-radius: 2px;
+        }
+        
+        .encoded-highlight {
+            background-color: rgba(0, 255, 255, 0.3);
+            padding: 2px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+        
+        .analysis-output {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        
+        .warning {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid #ffa500;
+            color: #ffa500;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 INCIDENT RESPONSE 🚨</h1>
+            <h2>Challenge: The Sophisticated Breach</h2>
+            <p>Difficulty: <span style="color: #ff0000;">Medium</span> | Category: Advanced Log Analysis</p>
+        </div>
+        
+        <div class="challenge-box">
+            <h3>🔒 CLASSIFIED INCIDENT REPORT</h3>
+            <p><strong>Date:</strong> 2024-03-15</p>
+            <p><strong>Severity:</strong> CRITICAL</p>
+            <p><strong>Classification:</strong> APT (Advanced Persistent Threat)</p>
+            
+            <p><strong>Situation:</strong> A sophisticated attacker has compromised our web infrastructure using multiple attack vectors. The incident involves:</p>
+            <ul>
+                <li>Advanced evasion techniques with encoded payloads</li>
+                <li>Multiple attack phases across different timeframes</li>
+                <li>Data exfiltration attempts through various channels</li>
+                <li>Evidence of lateral movement and privilege escalation</li>
+            </ul>
+            
+            <p><strong>Your Mission:</strong></p>
+            <ul>
+                <li>Identify ALL compromised systems and attack vectors</li>
+                <li>Reconstruct the complete attack timeline</li>
+                <li>Find evidence of data exfiltration</li>
+                <li>Discover the final payload hidden across multiple log entries</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>⚠️ WARNING:</strong> This challenge contains over 150 log entries with multiple layers of encoding. The flag is split and encoded across several successful attack attempts. Advanced analysis techniques required.
+            </div>
+            
+            <p><strong>Flag Format:</strong> <code>CTF{...}</code></p>
+        </div>
+        
+        <div class="advanced-tools">
+            <div class="tool-box">
+                <h4>🔍 Log Analysis</h4>
+                <select id="filterType">
+                    <option value="all">Show All Logs (150+ entries)</option>
+                    <option value="errors">HTTP Errors (4xx, 5xx)</option>
+                    <option value="suspicious">Suspicious Patterns</option>
+                    <option value="encoded">Encoded Content</option>
+                    <option value="successful">Successful Attacks (2xx)</option>
+                    <option value="ip">Filter by IP Address</option>
+                    <option value="timeframe">Time Range Analysis</option>
+                </select>
+                <input type="text" id="filterValue" placeholder="Filter criteria..." />
+                <button onclick="applyFilter()">Apply Filter</button>
+                <button onclick="resetFilter()">Reset View</button>
+            </div>
+            
+            <div class="tool-box">
+                <h4>🧮 Pattern Analysis</h4>
+                <button onclick="detectAnomalies()">Detect Anomalies</button>
+                <button onclick="analyzeEncodings()">Decode Payloads</button>
+                <button onclick="correlateAttacks()">Correlate Attacks</button>
+                <button onclick="buildTimeline()">Build Timeline</button>
+            </div>
+            
+            <div class="tool-box">
+                <h4>🔬 Advanced Tools</h4>
+                <button onclick="extractIOCs()">Extract IOCs</button>
+                <button onclick="analyzeUserAgents()">Analyze User Agents</button>
+                <!-- <button onclick="findHiddenData()">Find Hidden Data</button> -->
+                <button onclick="downloadLogs()">📥 Export Logs</button>
+            </div>
+            
+            <div class="tool-box">
+                <h4>🧩 Flag Reconstruction</h4>
+                <textarea id="flagParts" rows="3" placeholder="Collect flag parts here..."></textarea>
+                <button onclick="assembleFlagParts()">Assemble Flag Parts</button>
+                <!-- <button onclick="decodeFlag()">Decode Final Flag</button> --> 
+            </div>
+        </div>
+        
+        <div class="log-viewer" id="logViewer">
+            Loading comprehensive security logs...
+        </div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <!-- Advanced statistics will be populated here -->
+        </div>
+        
+        <div class="analysis-output" id="analysisOutput" style="display: none;">
+            <!-- Analysis results appear here -->
+        </div>
+        
+        <div class="hint">
+            <strong>💡 Level 1 Hint:</strong> This is a multi-stage attack. Look for patterns across different IP addresses and timeframes. The attacker used various encoding techniques including Base64, URL encoding, and hex encoding.
+        </div>
+        
+        <div class="hint" id="hint2" style="display: none;">
+            <strong>💡 Level 2 Hint:</strong> The flag is split into 4 parts, each hidden in successful attack requests (200 status). Look for Base64 strings in the payloads and decode them. The parts need to be assembled in chronological order.
+        </div>
+        
+        <div class="hint" id="hint3" style="display: none;">
+            <strong>💡 Level 3 Hint:</strong> Search for patterns like: "FLAG_PART_1", "FLAG_PART_2", etc. in decoded payloads. The User-Agent fields also contain encoded data that forms part of the reconstruction key.
+        </div>
+        
+        <div class="hint" id="hint4" style="display: none;">
+            <strong>💡 Level 4 Hint:</strong> After finding all 4 flag parts, they need to be XOR'ed with a key derived from the attacking IP addresses. The final result is then Base64 decoded.
+        </div>
+        
+        <div class="flag-input">
+            <input type="text" id="flagInput" placeholder="Enter the reconstructed flag (CTF{...})" />
+            <button onclick="checkFlag()" style="width: auto;">Submit Flag</button>
+            <button onclick="showHint()" style="width: auto;">Need Hint?</button>
+        </div>
+        
+        <div class="success" id="successMessage">
+            <h3>🎉 INCIDENT RESOLVED! 🎉</h3>
+            <p>Outstanding work! You successfully analyzed the sophisticated multi-stage attack and reconstructed the hidden flag!</p>
+            <p>Your advanced forensic analysis skills are exceptional.</p>
+        </div>
+        
+        <div class="solution" id="solutionDiv">
+            <h3>🔓 Complete Incident Analysis Report</h3>
+            <p><strong>Attack Summary:</strong> Multi-stage APT attack with sophisticated evasion</p>
+            
+            <p><strong>Attacking IPs:</strong></p>
+            <ul>
+                <li>10.0.0.42 - Initial reconnaissance and SQL injection</li>
+                <li>172.16.1.33 - Lateral movement and privilege escalation</li>
+                <li>192.168.5.77 - Data exfiltration attempts</li>
+                <li>203.0.113.99 - Final payload delivery</li>
+            </ul>
+            
+            <p><strong>Attack Timeline:</strong></p>
+            <ol>
+                <li><strong>Phase 1 (02:15-02:18):</strong> Reconnaissance and initial compromise via SQL injection</li>
+                <li><strong>Phase 2 (02:22-02:25):</strong> Lateral movement using stolen credentials</li>
+                <li><strong>Phase 3 (02:30-02:35):</strong> Data enumeration and privilege escalation</li>
+                <li><strong>Phase 4 (02:40-02:45):</strong> Data exfiltration and flag placement</li>
+            </ol>
+            
+            <p><strong>Flag Reconstruction Process:</strong></p>
+            <ol>
+                <li>Extract 4 Base64-encoded flag parts from successful attacks</li>
+                <li>Decode each part: "CTF{", "4dv4nc3d_", "l0g_an4ly", "51s_n1nj4}"</li>
+                <li>Assemble in chronological order</li>
+                <li>Final flag: CTF{4dv4nc3d_l0g_an4ly51s_n1nj4}</li>
+            </ol>
+            
+            <p><strong>Evasion Techniques Identified:</strong></p>
+            <ul>
+                <li>Multiple encoding layers (Base64 + URL + Hex)</li>
+                <li>Time-based attack distribution</li>
+                <li>User-Agent spoofing and rotation</li>
+                <li>Payload fragmentation across requests</li>
+                <li>False positive generation to obscure real attacks</li>
+            </ul>
+        </div>
+        
+        <button onclick="toggleSolution()" style="margin-top: 20px;">Show/Hide Complete Analysis Report</button>
+    </div>
+
+    <script>
+        let originalLogs = [];
+        let filteredLogs = [];
+        let hintCount = 0;
+        let flagParts = [];
+        
+        // Generate comprehensive log entries with sophisticated attack patterns
+        function generateAdvancedLogs() {
+            const logs = [];
+            const ips = ['10.0.0.42', '172.16.1.33', '192.168.5.77', '203.0.113.99'];
+            const legitimateIPs = ['192.168.1.10', '192.168.1.11', '192.168.1.12', '192.168.1.13', '192.168.1.14'];
+            
+            // Add legitimate traffic (noise)
+            for (let i = 0; i < 80; i++) {
+                const ip = legitimateIPs[Math.floor(Math.random() * legitimateIPs.length)];
+                const hour = String(Math.floor(Math.random() * 3) + 2).padStart(2, '0');
+                const minute = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+                const second = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+                const pages = ['/index.php', '/about.php', '/contact.php', '/products.php', '/gallery.php', '/news.php'];
+                const page = pages[Math.floor(Math.random() * pages.length)];
+                const status = Math.random() > 0.1 ? '200' : '404';
+                const size = Math.floor(Math.random() * 5000) + 1000;
+                
+                logs.push(`${ip} - - [15/Mar/2024:${hour}:${minute}:${second} +0000] "GET ${page} HTTP/1.1" ${status} ${size} "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"`);
+            }
+            
+            // Phase 1: Initial reconnaissance and SQL injection (10.0.0.42)
+            logs.push('10.0.0.42 - - [15/Mar/2024:02:15:23 +0000] "GET /admin HTTP/1.1" 404 162 "-" "python-requests/2.28.1"');
+            logs.push('10.0.0.42 - - [15/Mar/2024:02:15:45 +0000] "GET /login.php HTTP/1.1" 200 543 "-" "python-requests/2.28.1"');
+            logs.push('10.0.0.42 - - [15/Mar/2024:02:16:12 +0000] "POST /login.php HTTP/1.1" 401 89 "-" "python-requests/2.28.1"');
+            logs.push('10.0.0.42 - - [15/Mar/2024:02:17:34 +0000] "GET /login.php?user=admin&pass=%27%20UNION%20SELECT%20%27Q1RGew%3d%3d%27%2Cpassword%20FROM%20users--%20 HTTP/1.1" 200 445 "-" "python-requests/2.28.1"');
+            
+            // Phase 2: Lateral movement (172.16.1.33)
+            logs.push('172.16.1.33 - - [15/Mar/2024:02:22:15 +0000] "GET /admin/dashboard.php HTTP/1.1" 200 1234 "-" "Q2hyb21l"');
+            logs.push('172.16.1.33 - - [15/Mar/2024:02:23:42 +0000] "POST /admin/users.php HTTP/1.1" 200 567 "-" "TW96aWxsYS81LjA="');
+            logs.push('172.16.1.33 - - [15/Mar/2024:02:24:18 +0000] "GET /admin/config.php?data=NGR2NGE1bjMzZF8%3d HTTP/1.1" 200 789 "-" "Q2hyb21l"');
+            
+            // Phase 3: Privilege escalation (192.168.5.77)
+            logs.push('192.168.5.77 - - [15/Mar/2024:02:30:33 +0000] "POST /admin/system.php HTTP/1.1" 500 234 "-" "U2FmYXJp"');
+            logs.push('192.168.5.77 - - [15/Mar/2024:02:31:55 +0000] "GET /admin/backup.php HTTP/1.1" 403 156 "-" "U2FmYXJp"');
+            logs.push('192.168.5.77 - - [15/Mar/2024:02:33:22 +0000] "GET /admin/export.php?query=bDBnXzRuNGx5&format=csv HTTP/1.1" 200 2341 "-" "U2FmYXJp"');
+            
+            // Phase 4: Data exfiltration and final payload (203.0.113.99)
+            logs.push('203.0.113.99 - - [15/Mar/2024:02:40:11 +0000] "POST /admin/download.php HTTP/1.1" 200 5678 "-" "RWRnZQ=="');
+            logs.push('203.0.113.99 - - [15/Mar/2024:02:42:44 +0000] "GET /admin/files.php?path=../../../etc&cmd=NTFzX241bmo0 HTTP/1.1" 200 3456 "-" "RWRnZQ=="');
+            logs.push('203.0.113.99 - - [15/Mar/2024:02:44:17 +0000] "POST /admin/execute.php HTTP/1.1" 200 1122 "X-Custom: fQ==" "RWRnZQ=="');
+            
+            // Add some failed attempts and false positives
+            for (let i = 0; i < 20; i++) {
+                const ip = ips[Math.floor(Math.random() * ips.length)];
+                const hour = String(Math.floor(Math.random() * 2) + 2).padStart(2, '0');
+                const minute = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+                const second = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+                const status = Math.random() > 0.7 ? '200' : (Math.random() > 0.5 ? '401' : '404');
+                
+                logs.push(`${ip} - - [15/Mar/2024:${hour}:${minute}:${second} +0000] "GET /admin/test.php?id=${Math.floor(Math.random() * 1000)} HTTP/1.1" ${status} 234 "-" "curl/7.68.0"`);
+            }
+            
+            // Sort logs by timestamp
+            return logs.sort();
+        }
+        
+        window.onload = function() {
+            originalLogs = generateAdvancedLogs();
+            filteredLogs = [...originalLogs];
+            displayLogs();
+            updateAdvancedStats();
+        };
+        
+        function displayLogs() {
+            const viewer = document.getElementById('logViewer');
+            let formattedLogs = filteredLogs.map(log => {
+                // Highlight various suspicious patterns
+                log = log.replace(/(UNION|SELECT|python-requests|%27|%20|%3d)/g, '<span class="highlight">$1</span>');
+                log = log.replace(/(Q1RGew|NGR2NGE1bjMzZF8|bDBnXzRuNGx5|NTFzX241bmo0|fQ)/g, '<span class="encoded-highlight">$1</span>');
+                log = log.replace(/(10\.0\.0\.42|172\.16\.1\.33|192\.168\.5\.77|203\.0\.113\.99)/g, '<span style="color: #ff0000; font-weight: bold;">$1</span>');
+                return log;
+            }).join('\n');
+            
+            viewer.innerHTML = formattedLogs;
+            viewer.scrollTop = 0;
+        }
+        
+        function updateAdvancedStats() {
+            const stats = document.getElementById('statsGrid');
+            const ipCounts = {};
+            const statusCodes = {};
+            const userAgents = {};
+            const timeDistribution = {};
+            const payloadPatterns = {};
+            
+            originalLogs.forEach(log => {
+                const ipMatch = log.match(/^(\d+\.\d+\.\d+\.\d+)/);
+                const statusMatch = log.match(/" (\d{3}) /);
+                const userAgentMatch = log.match(/"([^"]*)"$/);
+                const timeMatch = log.match(/\[15\/Mar\/2024:(\d{2}):/);
+                
+                if (ipMatch) ipCounts[ipMatch[1]] = (ipCounts[ipMatch[1]] || 0) + 1;
+                if (statusMatch) statusCodes[statusMatch[1]] = (statusCodes[statusMatch[1]] || 0) + 1;
+                if (userAgentMatch) {
+                    const ua = userAgentMatch[1].split(' ')[0];
+                    userAgents[ua] = (userAgents[ua] || 0) + 1;
+                }
+                if (timeMatch) timeDistribution[timeMatch[1]] = (timeDistribution[timeMatch[1]] || 0) + 1;
+                
+                // Look for encoded patterns
+                const encodedMatches = log.match(/[A-Za-z0-9+\/]{8,}={0,2}/g);
+                if (encodedMatches) {
+                    encodedMatches.forEach(match => {
+                        if (match.length > 8) payloadPatterns[match] = (payloadPatterns[match] || 0) + 1;
+                    });
+                }
+            });
+            
+            const suspiciousIPs = ['10.0.0.42', '172.16.1.33', '192.168.5.77', '203.0.113.99'];
+            const topIPs = Object.entries(ipCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            const topStatus = Object.entries(statusCodes).sort((a, b) => b[1] - a[1]);
+            const encodedPayloads = Object.entries(payloadPatterns).filter(([payload, count]) => count > 0).slice(0, 6);
+            
+            stats.innerHTML = `
+                <div class="stat-item ${topIPs.some(([ip]) => suspiciousIPs.includes(ip)) ? 'suspicious' : ''}">
+                    <strong>🎯 IP Address Analysis</strong><br>
+                    ${topIPs.map(([ip, count]) => 
+                        `${ip}: ${count} requests ${suspiciousIPs.includes(ip) ? '🚨' : ''}`
+                    ).join('<br>')}
+                </div>
+                
+                <div class="stat-item">
+                    <strong>📊 HTTP Status Distribution</strong><br>
+                    ${topStatus.map(([status, count]) => 
+                        `${status}: ${count} ${status.startsWith('2') ? '✅' : (status.startsWith('4') || status.startsWith('5') ? '⚠️' : '')}`
+                    ).join('<br>')}
+                </div>
+                
+                <div class="stat-item">
+                    <strong>🕐 Time Distribution</strong><br>
+                    ${Object.entries(timeDistribution).map(([hour, count]) => 
+                        `${hour}:xx - ${count} requests`
+                    ).join('<br>')}
+                </div>
+                
+                <div class="stat-item suspicious">
+                    <strong>🔐 Encoded Payloads Detected</strong><br>
+                    ${encodedPayloads.map(([payload, count]) => 
+                        `${payload.substring(0, 20)}... (${count}x)`
+                    ).join('<br>')}
+                </div>
+            `;
+        }
+        
+        function applyFilter() {
+            const filterType = document.getElementById('filterType').value;
+            const filterValue = document.getElementById('filterValue').value.toLowerCase();
+            
+            switch(filterType) {
+                case 'errors':
+                    filteredLogs = originalLogs.filter(log => log.includes(' 4') || log.includes(' 5'));
+                    break;
+                case 'suspicious':
+                    filteredLogs = originalLogs.filter(log => 
+                        log.includes('10.0.0.42') || log.includes('172.16.1.33') || 
+                        log.includes('192.168.5.77') || log.includes('203.0.113.99') ||
+                        log.includes('UNION') || log.includes('python-requests')
+                    );
+                    break;
+                case 'encoded':
+                    filteredLogs = originalLogs.filter(log => /[A-Za-z0-9+\/]{12,}={0,2}/.test(log));
+                    break;
+                case 'successful':
+                    filteredLogs = originalLogs.filter(log => log.includes(' 200 '));
+                    break;
+                case 'ip':
+                    if (filterValue) {
+                        filteredLogs = originalLogs.filter(log => log.toLowerCase().includes(filterValue));
+                    }
+                    break;
+                case 'timeframe':
+                    if (filterValue) {
+                        filteredLogs = originalLogs.filter(log => log.includes(filterValue));
+                    }
+                    break;
+                default:
+                    filteredLogs = [...originalLogs];
+            }
+            
+            displayLogs();
+            showAnalysis(`Filtered to ${filteredLogs.length} entries based on: ${filterType}`);
+        }
+        
+        function resetFilter() {
+            filteredLogs = [...originalLogs];
+            document.getElementById('filterType').value = 'all';
+            document.getElementById('filterValue').value = '';
+            displayLogs();
+            hideAnalysis();
+        }
+        
+        function analyzeEncodings() {
+            const encodedStrings = [];
+            const suspiciousLogs = originalLogs.filter(log => 
+                log.includes('10.0.0.42') || log.includes('172.16.1.33') || 
+                log.includes('192.168.5.77') || log.includes('203.0.113.99')
+            );
+            
+            suspiciousLogs.forEach(log => {
+                const matches = log.match(/[A-Za-z0-9+\/]{6,}={0,2}/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        if (match.length >= 6) {
+                            try {
+                                const decoded = atob(match);
+                                if (decoded.includes('CTF') || decoded.includes('FLAG') || /^[a-zA-Z0-9_{}]+$/.test(decoded)) {
+                                    encodedStrings.push(`${match} -> ${decoded}`);
+                                }
+                            } catch (e) {
+                                // Not valid base64
+                            }
+                        }
+                    });
+                }
+            });
+            
+            showAnalysis(`Decoded Payloads Found:\n${encodedStrings.join('\n')}\n\nLook for flag parts in the decoded strings!`);
+        }
+        
+        function detectAnomalies() {
+            const analysis = [];
+            const ipCounts = {};
+            const statusByIP = {};
+            
+            originalLogs.forEach(log => {
+                const ipMatch = log.match(/^(\d+\.\d+\.\d+\.\d+)/);
+                const statusMatch = log.match(/" (\d{3}) /);
+                
+                if (ipMatch) {
+                    const ip = ipMatch[1];
+                    ipCounts[ip] = (ipCounts[ip] || 0) + 1;
+                    if (!statusByIP[ip]) statusByIP[ip] = {};
+                    if (statusMatch) {
+                        statusByIP[ip][statusMatch[1]] = (statusByIP[ip][statusMatch[1]] || 0) + 1;
+                    }
+                }
+            });
+            
+            // Find anomalous IPs
+            Object.entries(ipCounts).forEach(([ip, count]) => {
+                if (count > 10 && !ip.startsWith('192.168.1.')) {
+                    analysis.push(`🚨 ANOMALY: ${ip} made ${count} requests (suspicious volume)`);
+                    
+                    const statuses = statusByIP[ip];
+                    const successRate = (statuses['200'] || 0) / count * 100;
+                    if (successRate > 50) {
+                        analysis.push(`   High success rate: ${successRate.toFixed(1)}% (possible compromise)`);
+                    }
+                }
+            });
+            
+            // Time-based analysis
+            const timePattern = {};
+            originalLogs.forEach(log => {
+                const timeMatch = log.match(/\[15\/Mar\/2024:(\d{2}:\d{2}):/);
+                if (timeMatch) {
+                    timePattern[timeMatch[1]] = (timePattern[timeMatch[1]] || 0) + 1;
+                }
+            });
+            
+            analysis.push('\n📊 ACTIVITY TIMELINE:');
+            Object.entries(timePattern).sort().forEach(([time, count]) => {
+                if (count > 5) {
+                    analysis.push(`${time} - ${count} requests`);
+                }
+            });
+            
+            showAnalysis(analysis.join('\n'));
+        }
+        
+        function correlateAttacks() {
+            const attackPhases = [
+                { ip: '10.0.0.42', phase: 'Initial Compromise', time: '02:15-02:18' },
+                { ip: '172.16.1.33', phase: 'Lateral Movement', time: '02:22-02:25' },
+                { ip: '192.168.5.77', phase: 'Privilege Escalation', time: '02:30-02:35' },
+                { ip: '203.0.113.99', phase: 'Data Exfiltration', time: '02:40-02:45' }
+            ];
+            
+            let correlation = '🔗 ATTACK CORRELATION ANALYSIS:\n\n';
+            
+            attackPhases.forEach(phase => {
+                const phaseLogs = originalLogs.filter(log => log.includes(phase.ip));
+                correlation += `Phase: ${phase.phase} (${phase.time})\n`;
+                correlation += `IP: ${phase.ip}\n`;
+                correlation += `Requests: ${phaseLogs.length}\n`;
+                
+                const successfulAttacks = phaseLogs.filter(log => log.includes(' 200 '));
+                if (successfulAttacks.length > 0) {
+                    correlation += `✅ Successful attacks: ${successfulAttacks.length}\n`;
+                }
+                correlation += '\n';
+            });
+            
+            correlation += '🎯 RECOMMENDED ACTIONS:\n';
+            correlation += '1. Block all identified IPs immediately\n';
+            correlation += '2. Check for lateral movement indicators\n';
+            correlation += '3. Audit all successful 200 responses for data exfiltration\n';
+            correlation += '4. Look for encoded payloads in successful attacks\n';
+            
+            showAnalysis(correlation);
+        }
+        
+        function buildTimeline() {
+            const events = [];
+            const suspiciousIPs = ['10.0.0.42', '172.16.1.33', '192.168.5.77', '203.0.113.99'];
+            
+            originalLogs.forEach(log => {
+                const ipMatch = log.match(/^(\d+\.\d+\.\d+\.\d+)/);
+                const timeMatch = log.match(/\[15\/Mar\/2024:(\d{2}:\d{2}:\d{2})/);
+                const statusMatch = log.match(/" (\d{3}) /);
+                const pathMatch = log.match(/"[A-Z]+ ([^ ]+) HTTP/);
+                
+                if (ipMatch && suspiciousIPs.includes(ipMatch[1]) && timeMatch) {
+                    events.push({
+                        time: timeMatch[1],
+                        ip: ipMatch[1],
+                        status: statusMatch ? statusMatch[1] : 'unknown',
+                        path: pathMatch ? pathMatch[1] : 'unknown',
+                        log: log
+                    });
+                }
+            });
+            
+            events.sort((a, b) => a.time.localeCompare(b.time));
+            
+            let timeline = '📅 ATTACK TIMELINE:\n\n';
+            events.forEach(event => {
+                const status = event.status === '200' ? '✅' : '❌';
+                timeline += `${event.time} | ${event.ip} | ${status} ${event.status} | ${event.path}\n`;
+                
+                if (event.status === '200' && event.log.includes('=')) {
+                    timeline += `    └─ 🔍 Contains encoded data - check for flag parts\n`;
+                }
+            });
+            
+            showAnalysis(timeline);
+        }
+        
+        function findHiddenData() {
+            const flagParts = [];
+            const encodings = [
+                { encoded: 'Q1RGew==', decoded: 'CTF{', part: 1 },
+                { encoded: 'NGR2NGE1bjMzZF8=', decoded: '4dv4nc3d_', part: 2 },
+                { encoded: 'bDBnXzRuNGx5', decoded: 'l0g_an4ly', part: 3 },
+                { encoded: 'NTFzX241bmo0', decoded: '51s_n1nj4', part: 4 },
+                { encoded: 'fQ==', decoded: '}', part: 5 }
+            ];
+            
+            let analysis = '🧩 FLAG RECONSTRUCTION ANALYSIS:\n\n';
+            
+            encodings.forEach(enc => {
+                const foundLogs = originalLogs.filter(log => log.includes(enc.encoded));
+                if (foundLogs.length > 0) {
+                    analysis += `Part ${enc.part}: ${enc.encoded} -> "${enc.decoded}"\n`;
+                    analysis += `Found in ${foundLogs.length} log(s)\n\n`;
+                    flagParts.push(enc.decoded);
+                }
+            });
+            
+            if (flagParts.length > 0) {
+                const assembledFlag = flagParts.join('');
+                analysis += `🎯 ASSEMBLED FLAG: ${assembledFlag}\n\n`;
+                analysis += `Copy this to the flag input field!`;
+                
+                // Auto-populate the flag parts textarea
+                document.getElementById('flagParts').value = flagParts.join(' + ');
+            }
+            
+            showAnalysis(analysis);
+        }
+        
+        function assembleFlagParts() {
+            const parts = document.getElementById('flagParts').value;
+            if (parts.trim()) {
+                showAnalysis(`Assembling flag parts: ${parts}\n\nUse the "Decode Final Flag" button to complete reconstruction.`);
+            } else {
+                showAnalysis('Please use "Find Hidden Data" first to collect flag parts.');
+            }
+        }
+        
+        function decodeFlag() {
+            const correctParts = ['CTF{', '4dv4nc3d_', 'l0g_an4ly', '51s_n1nj4', '}'];
+            const assembledFlag = correctParts.join('');
+            
+            document.getElementById('flagParts').value = assembledFlag;
+            showAnalysis(`Final decoded flag: ${assembledFlag}\n\nThis is your answer!`);
+        }
+        
+        function extractIOCs() {
+            const iocs = {
+                ips: ['10.0.0.42', '172.16.1.33', '192.168.5.77', '203.0.113.99'],
+                userAgents: ['python-requests/2.28.1', 'Q2hyb21l', 'TW96aWxsYS81LjA=', 'U2FmYXJp', 'RWRnZQ=='],
+                paths: ['/login.php', '/admin/dashboard.php', '/admin/config.php', '/admin/export.php', '/admin/execute.php'],
+                techniques: ['SQL Injection', 'Base64 Encoding', 'URL Encoding', 'User-Agent Spoofing']
+            };
+            
+            let iocReport = '🚨 INDICATORS OF COMPROMISE (IOCs):\n\n';
+            iocReport += '📍 Malicious IP Addresses:\n';
+            iocs.ips.forEach(ip => iocReport += `  - ${ip}\n`);
+            
+            iocReport += '\n🕵️ Suspicious User Agents:\n';
+            iocs.userAgents.forEach(ua => {
+                try {
+                    const decoded = atob(ua);
+                    iocReport += `  - ${ua} (${decoded})\n`;
+                } catch(e) {
+                    iocReport += `  - ${ua}\n`;
+                }
+            });
+            
+            iocReport += '\n🎯 Targeted Endpoints:\n';
+            iocs.paths.forEach(path => iocReport += `  - ${path}\n`);
+            
+            iocReport += '\n🔧 Attack Techniques:\n';
+            iocs.techniques.forEach(tech => iocReport += `  - ${tech}\n`);
+            
+            showAnalysis(iocReport);
+        }
+        
+        function analyzeUserAgents() {
+            const userAgents = {};
+            originalLogs.forEach(log => {
+                const uaMatch = log.match(/"([^"]*)"$/);
+                if (uaMatch) {
+                    const ua = uaMatch[1];
+                    userAgents[ua] = (userAgents[ua] || 0) + 1;
+                }
+            });
+            
+            let analysis = '🔍 USER AGENT ANALYSIS:\n\n';
+            Object.entries(userAgents).sort((a, b) => b[1] - a[1]).forEach(([ua, count]) => {
+                analysis += `${ua} (${count}x)\n`;
+                
+                // Try to decode if it looks like base64
+                if (/^[A-Za-z0-9+\/]+=*$/.test(ua) && ua.length > 8) {
+                    try {
+                        const decoded = atob(ua);
+                        analysis += `  └─ Decoded: ${decoded}\n`;
+                    } catch(e) {
+                        // Not base64
+                    }
+                }
+                analysis += '\n';
+            });
+            
+            showAnalysis(analysis);
+        }
+        
+        function downloadLogs() {
+            const logContent = originalLogs.join('\n');
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'advanced_security_incident.log';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function showAnalysis(content) {
+            const output = document.getElementById('analysisOutput');
+            output.textContent = content;
+            output.style.display = 'block';
+        }
+        
+        function hideAnalysis() {
+            document.getElementById('analysisOutput').style.display = 'none';
+        }
+        
+        function checkFlag() {
+            const input = document.getElementById('flagInput').value.trim();
+            // Double-encoded flag: Base64 of hex-encoded flag
+            const encodedFlag = 'Q1RGezRkdjRuYzNkX2wwZ19hbjRseTUxc19uMW5qNH0=';
+            const correctFlag = atob(encodedFlag);
+            
+            if (input === correctFlag) {
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('flagInput').style.background = 'rgba(0, 255, 0, 0.2)';
+            } else {
+                document.getElementById('flagInput').style.background = 'rgba(255, 0, 0, 0.2)';
+                setTimeout(() => {
+                    document.getElementById('flagInput').style.background = 'rgba(0, 0, 0, 0.7)';
+                }, 1000);
+            }
+        }
+        
+        function showHint() {
+            hintCount++;
+            if (hintCount >= 1) {
+                document.getElementById('hint2').style.display = 'block';
+            }
+            if (hintCount >= 2) {
+                document.getElementById('hint3').style.display = 'block';
+            }
+            if (hintCount >= 3) {
+                document.getElementById('hint4').style.display = 'block';
+            }
+        }
+        
+        function toggleSolution() {
+            const solution = document.getElementById('solutionDiv');
+            solution.style.display = solution.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

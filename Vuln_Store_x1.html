@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge: The Vulnerable Web App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .ctf-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ctf-header h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .ctf-header h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .difficulty {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        
+        .challenge-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .web-app-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            padding: 0;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .app-header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .app-content {
+            padding: 30px;
+        }
+        
+        .vulnerability-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            background: #fff5f5;
+        }
+        
+        .vulnerability-section h3 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .search-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .search-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .comment-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .comment {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .comment-form {
+            margin-top: 15px;
+        }
+        
+        .comment-input {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .hints-section {
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .hint {
+            background: rgba(255, 193, 7, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .hidden-hint {
+            display: none;
+        }
+        
+        .flag-section {
+            background: rgba(40, 167, 69, 0.1);
+            border: 2px solid #28a745;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .flag-input {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .flag-input input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .submit-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .success-message {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .code-snippet {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .solution-section {
+            background: rgba(220, 53, 69, 0.1);
+            border: 2px solid #dc3545;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .toggle-button {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ctf-header">
+            <h1>🛡️ WEB SECURITY CTF 🛡️</h1>
+            <h2>Challenge: Cross-Site Scripting (XSS) Exploitation</h2>
+            <span class="difficulty">Beginner-Intermediate</span>
+        </div>
+        
+        <div class="challenge-info">
+            <h3>🎯 Mission Briefing</h3>
+            <p><strong>Scenario:</strong> You've discovered a vulnerable web application that contains multiple XSS vulnerabilities. Your goal is to identify and exploit these vulnerabilities to find the hidden flag.</p>
+            
+            <div class="warning">
+                <strong>⚠️ Educational Purpose:</strong> This challenge is designed for learning about web security vulnerabilities. In real applications, XSS can be used maliciously to steal user data, hijack sessions, or perform unauthorized actions. Always practice ethical hacking on authorized systems only.
+            </div>
+            
+            <h4>Objectives:</h4>
+            <ul>
+                <li>Identify XSS vulnerabilities in the web application below</li>
+                <li>Execute JavaScript code through these vulnerabilities</li>
+                <li>Find the hidden flag through successful XSS exploitation</li>
+                <li>Understand different types of XSS attacks</li>
+            </ul>
+            
+            <p><strong>Flag Format:</strong> <code>CTF{...}</code></p>
+        </div>
+        
+        <div class="web-app-container">
+            <div class="app-header">
+                <h2>🌐 VulnShop - Online Store</h2>
+                <p>Welcome to our "secure" e-commerce platform!</p>
+            </div>
+            
+            <div class="app-content">
+                <!-- Reflected XSS Vulnerability -->
+                <div class="vulnerability-section">
+                    <h3>🔍 Product Search </h3>
+                    <p>Search for products in our store:</p>
+                    <input type="text" id="searchInput" class="search-box" placeholder="Enter product name...">
+                    <button onclick="performSearch()" class="search-button">Search Products</button>
+                    
+                    <div id="searchResults" class="search-results" style="display: none;">
+                        <h4>Search Results:</h4>
+                        <p id="searchResultText"></p>
+                    </div>
+                </div>
+                
+                <!-- Stored XSS Vulnerability -->
+                <div class="vulnerability-section">
+                    <h3>💬 Customer Reviews </h3>
+                    <p>Share your experience with our products:</p>
+                    
+                    <div class="comment-section">
+                        <div id="comments">
+                            <div class="comment">
+                                <strong>John D.:</strong> Great products! Very satisfied with my purchase.
+                            </div>
+                            <div class="comment">
+                                <strong>Sarah M.:</strong> Fast shipping and excellent customer service.
+                            </div>
+                        </div>
+                        
+                        <div class="comment-form">
+                            <textarea id="commentInput" class="comment-input" placeholder="Write your review here..."></textarea>
+                            <button onclick="submitComment()" class="search-button" style="margin-top: 10px;">Submit Review</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DOM-based XSS -->
+                <div class="vulnerability-section">
+                    <h3>🔗 Product Details </h3>
+                    <p>View product details by ID:</p>
+                    <input type="text" id="productId" class="search-box" placeholder="Enter product ID (e.g., 123)">
+                    <button onclick="loadProduct()" class="search-button">Load Product</button>
+                    
+                    <div id="productDetails" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+        
+    
+        
+        <div class="flag-section">
+            <h3>🚩 Flag Submission</h3>
+            <p>Once you've successfully executed XSS and found the flag, submit it here:</p>
+            
+            <div class="flag-input">
+                <input type="text" id="flagInput" placeholder="Enter the flag (CTF{...})">
+                <button onclick="checkFlag()" class="submit-button">Submit Flag</button>
+            </div>
+            
+            <div id="successMessage" class="success-message">
+                <h3>🎉 CHALLENGE COMPLETED! 🎉</h3>
+                <p>Congratulations! You successfully identified and exploited XSS vulnerabilities!</p>
+                <p>You've learned about the dangers of improper input validation and output encoding.</p>
+            </div>
+        </div>
+        
+        <div class="solution-section" id="solutionSection">
+            <h3>🔓 Complete Solution Walkthrough</h3>
+            
+            <h4>Vulnerability 1: Reflected XSS (Search Function)</h4>
+            <div class="code-snippet">
+Payload: &lt;script&gt;alert(window.hiddenFlag)&lt;/script&gt;
+Location: Search box
+Impact: JavaScript executes immediately when search is performed
+            </div>
+            
+            <h4>Vulnerability 2: Stored XSS (Comments)</h4>
+            <div class="code-snippet">
+Payload: &lt;script&gt;alert('Stored XSS: ' + document.secret)&lt;/script&gt;
+Location: Comment/Review textarea
+Impact: JavaScript executes for every user who views the comments
+            </div>
+            
+            <h4>Vulnerability 3: DOM-based XSS (Product Details)</h4>
+            <div class="code-snippet">
+Payload: &lt;img src=x onerror=alert(document.flag)&gt;
+Location: Product ID input
+Impact: Client-side JavaScript processes input unsafely
+            </div>
+            
+            <h4>Prevention Techniques:</h4>
+            <ul>
+                <li><strong>Input Validation:</strong> Sanitize and validate all user inputs</li>
+                <li><strong>Output Encoding:</strong> HTML encode data before displaying</li>
+                <li><strong>Content Security Policy (CSP):</strong> Restrict script execution</li>
+                <li><strong>Use Safe APIs:</strong> Avoid innerHTML, use textContent instead</li>
+                <li><strong>HTTP-only Cookies:</strong> Prevent script access to sensitive cookies</li>
+            </ul>
+        </div>
+        
+        <button onclick="toggleSolution()" class="toggle-button">Show/Hide Solution</button>
+    </div>
+
+    <script>
+        // Hidden flag - encoded to prevent source code inspection
+        window.hiddenFlag = atob('Q1RGe3hzc19tNHN0M3JfaDRja2VyX25pbmo0fQ==');
+        document.secret = window.hiddenFlag;
+        document.flag = window.hiddenFlag;
+        
+        let hintCount = 0;
+        let storedComments = [
+            { author: "John D.", text: "Great products! Very satisfied with my purchase." },
+            { author: "Sarah M.", text: "Fast shipping and excellent customer service." }
+        ];
+        
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const resultsDiv = document.getElementById('searchResults');
+            const resultText = document.getElementById('searchResultText');
+            
+            if (searchTerm.trim() === '') {
+                alert('Please enter a search term');
+                return;
+            }
+            
+            // VULNERABILITY: Reflected XSS - directly inserting user input without sanitization
+            resultText.innerHTML = `You searched for: <strong>${searchTerm}</strong><br>
+                                   Found 0 products matching your search.`;
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        function submitComment() {
+            const comment = document.getElementById('commentInput').value;
+            
+            if (comment.trim() === '') {
+                alert('Please write a review');
+                return;
+            }
+            
+            // VULNERABILITY: Stored XSS - storing and displaying user input without sanitization
+            storedComments.push({
+                author: "Anonymous User",
+                text: comment
+            });
+            
+            displayComments();
+            document.getElementById('commentInput').value = '';
+        }
+        
+        function displayComments() {
+            const commentsDiv = document.getElementById('comments');
+            commentsDiv.innerHTML = '';
+            
+            storedComments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment';
+                // VULNERABILITY: innerHTML allows script execution
+                commentDiv.innerHTML = `<strong>${comment.author}:</strong> ${comment.text}`;
+                commentsDiv.appendChild(commentDiv);
+            });
+        }
+        
+        function loadProduct() {
+            const productId = document.getElementById('productId').value;
+            const detailsDiv = document.getElementById('productDetails');
+            
+            if (productId.trim() === '') {
+                alert('Please enter a product ID');
+                return;
+            }
+            
+            // VULNERABILITY: DOM XSS - processing user input unsafely on client-side
+            if (isNaN(productId)) {
+                detailsDiv.innerHTML = `<div style="color: red;">Invalid product ID: ${productId}</div>`;
+            } else {
+                detailsDiv.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <h4>Product #${productId}</h4>
+                        <p>Sorry, product details are not available at this time.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function showNextHint() {
+            hintCount++;
+            if (hintCount <= 5) {
+                const hint = document.getElementById(`hint${hintCount + 1}`);
+                if (hint) {
+                    hint.classList.remove('hidden-hint');
+                }
+            }
+            
+            if (hintCount >= 5) {
+                document.querySelector('.hints-section button').style.display = 'none';
+            }
+        }
+        
+        function checkFlag() {
+            const userFlag = document.getElementById('flagInput').value.trim();
+            const correctFlag = atob('Q1RGe3hzc19tNHN0M3JfaDRja2VyX25pbmo0fQ=='); // {e052ad332e24bd05cfaafcbf69c5e1a3}
+            
+            if (userFlag === correctFlag) {
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('flagInput').style.borderColor = '#28a745';
+                document.getElementById('flagInput').style.background = '#d4edda';
+            } else {
+                document.getElementById('flagInput').style.borderColor = '#dc3545';
+                document.getElementById('flagInput').style.background = '#f8d7da';
+                setTimeout(() => {
+                    document.getElementById('flagInput').style.borderColor = '#28a745';
+                    document.getElementById('flagInput').style.background = 'white';
+                }, 2000);
+            }
+        }
+        
+        function toggleSolution() {
+            const solution = document.getElementById('solutionSection');
+            solution.style.display = solution.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Initialize the page
+        window.onload = function() {
+            displayComments();
+        };
+    </script>
+</body>
+</html>

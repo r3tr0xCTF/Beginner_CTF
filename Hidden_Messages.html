@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge: The Secret Photo</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #00ff41;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 20, 40, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .challenge-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .challenge-image {
+            max-width: 400px;
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .challenge-image:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+            transform: scale(1.02);
+        }
+        
+        .tools-section {
+            background: rgba(0, 50, 0, 0.2);
+            border-left: 4px solid #00ff41;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .hint {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .solution {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff6666;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #00ff41, #00cc33);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: linear-gradient(45deg, #00cc33, #00ff41);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        .flag-input {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        
+        input[type="text"] {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            flex: 1;
+        }
+        
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+        }
+        
+        .binary-display {
+            font-size: 12px;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕵️ DIGITAL FORENSICS CTF 🕵️</h1>
+            <h2>Challenge: The Secret Photo</h2>
+            <p>Difficulty: Beginner | Category: Steganography</p>
+        </div>
+        
+        <div class="challenge-box">
+            <h3>📋 Mission Briefing</h3>
+            <p>A suspicious image file was found on a suspect's computer. Intelligence suggests that this innocent-looking image contains a hidden message. Your mission is to extract the secret flag hidden within the image.</p>
+            
+            <p><strong>Objective:</strong> Find the hidden flag in the format: <code>CTF{...}</code></p>
+        </div>
+        
+        <div class="image-container">
+            <canvas id="challengeImage" class="challenge-image" width="400" height="300"></canvas>
+            <br><br>
+            <button onclick="downloadImage()">📥 Download Image (sunset.png)</button>
+        </div>
+        
+        <div class="tools-section">
+            <h3>🛠️ Online Analysis Tools</h3>
+            <p><strong>For this challenge, you can use:</strong></p>
+            <ul>
+                <li><strong>Built-in Browser Tool:</strong> Use the analysis tools below</li>
+                <li><strong>Online Hex Editor:</strong> <a href="https://hexed.it" target="_blank" style="color: #00ff41;">hexed.it</a></li>
+                <li><strong>Online Steganography Tool:</strong> <a href="https://stylesuxx.github.io/steganography/" target="_blank" style="color: #00ff41;">Steganography Online</a></li>
+                <li><strong>Command Line (if available):</strong> <code>strings filename.png</code>, <code>hexdump -C filename.png</code></li>
+            </ul>
+        </div>
+        
+        <div class="challenge-box">
+            <h3>🔍 Browser Analysis Tools</h3>
+            <button onclick="analyzeImage()">Analyze Image Data</button>
+            <button onclick="extractStrings()">Extract Text Strings</button>
+            <button onclick="showBinary()">Show Binary Data</button>
+            
+            <div id="analysisResults" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="hint">
+            <strong>💡 Hint 1:</strong> Look for text strings hidden in the image file. Sometimes secrets are hidden in plain sight within the file's metadata or padding.
+        </div>
+        
+        <div class="hint" id="hint2" style="display: none;">
+            <strong>💡 Hint 2:</strong> Try examining the end of the file. Data might be appended after the normal image content.
+        </div>
+        
+        <div class="hint" id="hint3" style="display: none;">
+            <strong>💡 Hint 3:</strong> Look for the string "CTF{" in the binary data or use the "Extract Text Strings" tool.
+        </div>
+        
+        <div class="flag-input">
+            <input type="text" id="flagInput" placeholder="Enter the flag (CTF{...})" />
+            <button onclick="checkFlag()">Submit Flag</button>
+            <button onclick="showHint()">Need a Hint?</button>
+        </div>
+        
+        <div class="success" id="successMessage">
+            <h3>🎉 CONGRATULATIONS! 🎉</h3>
+            <p>You successfully extracted the hidden flag!</p>
+            <p>You've completed your first steganography challenge!</p>
+        </div>
+        
+        <div class="solution" id="solutionDiv">
+            <h3>🔓 Solution Walkthrough</h3>
+            <p><strong>Method 1 - Browser Analysis:</strong></p>
+            <ol>
+                <li>Click "Extract Text Strings" to find readable text in the image</li>
+                <li>Look for the flag pattern "CTF{...}" in the results</li>
+            </ol>
+            <p><strong>Method 2 - Command Line:</strong></p>
+            <ol>
+                <li>Download the image file</li>
+                <li>Use: <code>strings sunset.png | grep CTF</code></li>
+                <li>Or: <code>hexdump -C sunset.png | grep -A2 -B2 CTF</code></li>
+            </ol>
+            <p><strong>Method 3 - Hex Editor:</strong></p>
+            <ol>
+                <li>Open the image in a hex editor</li>
+                <li>Search for "CTF" or scroll to the end of the file</li>
+                <li>Look for readable text after the image data</li>
+            </ol>
+            <p><strong>The flag was hidden as plaintext appended to the end of the PNG file!</strong></p>
+        </div>
+        
+        <button onclick="toggleSolution()" style="margin-top: 20px;">Show/Hide Solution</button>
+    </div>
+
+    <script>
+        // Create a sample image with hidden data
+        const canvas = document.getElementById('challengeImage');
+        const ctx = canvas.getContext('2d');
+        
+        // Draw a simple sunset scene
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, '#ff6b35');
+        gradient.addColorStop(0.5, '#f7931e');
+        gradient.addColorStop(1, '#ffd700');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 300);
+        
+        // Add sun
+        ctx.fillStyle = '#ffff99';
+        ctx.beginPath();
+        ctx.arc(320, 80, 40, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add ground
+        ctx.fillStyle = '#2d5016';
+        ctx.fillRect(0, 200, 400, 100);
+        
+        // Add tree silhouette
+        ctx.fillStyle = '#000';
+        ctx.fillRect(50, 120, 15, 80);
+        ctx.beginPath();
+        ctx.arc(57, 120, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        let hintCount = 0;
+        let imageData = null;
+        
+        function downloadImage() {
+            // Create image data with hidden flag
+            const link = document.createElement('a');
+            
+            // Convert canvas to blob and append hidden data
+            canvas.toBlob(function(blob) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    const arrayBuffer = reader.result;
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    
+                    // Append hidden flag to the end of the PNG
+                    const hiddenMessage = "\n\nHidden message: CTF{st3g4n0gr4phy_m4st3r}\n";
+                    const hiddenBytes = new TextEncoder().encode(hiddenMessage);
+                    
+                    const combinedArray = new Uint8Array(uint8Array.length + hiddenBytes.length);
+                    combinedArray.set(uint8Array);
+                    combinedArray.set(hiddenBytes, uint8Array.length);
+                    
+                    const newBlob = new Blob([combinedArray], { type: 'application/octet-stream' });
+                    const url = URL.createObjectURL(newBlob);
+                    
+                    link.href = url;
+                    link.download = 'sunset.png';
+                    link.click();
+                    
+                    // Store for analysis
+                    imageData = combinedArray;
+                    
+                    URL.revokeObjectURL(url);
+                };
+                reader.readAsArrayBuffer(blob);
+            });
+        }
+        
+        function analyzeImage() {
+            if (!imageData) {
+                // Generate image data for analysis
+                canvas.toBlob(function(blob) {
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        const arrayBuffer = reader.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        const hiddenMessage = "\n\nHidden message: CTF{st3g4n0gr4phy_m4st3r}\n";
+                        const hiddenBytes = new TextEncoder().encode(hiddenMessage);
+                        const combinedArray = new Uint8Array(uint8Array.length + hiddenBytes.length);
+                        combinedArray.set(uint8Array);
+                        combinedArray.set(hiddenBytes, uint8Array.length);
+                        imageData = combinedArray;
+                        
+                        displayAnalysis();
+                    };
+                    reader.readAsArrayBuffer(blob);
+                });
+            } else {
+                displayAnalysis();
+            }
+        }
+        
+        function displayAnalysis() {
+            const results = document.getElementById('analysisResults');
+            results.innerHTML = `
+                <div class="binary-display">
+                    <strong>File Analysis Results:</strong><br>
+                    File Size: ${imageData.length} bytes<br>
+                    File Type: PNG Image<br>
+                    Magic Bytes: ${Array.from(imageData.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')}<br>
+                    <br>
+                    <em>Tip: Look for unusual data at the end of the file...</em>
+                </div>
+            `;
+        }
+        
+        function extractStrings() {
+            if (!imageData) {
+                analyzeImage();
+                setTimeout(extractStrings, 100);
+                return;
+            }
+            
+            const text = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(imageData);
+            const printableStrings = [];
+            let currentString = '';
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char && char.charCodeAt(0) >= 32 && char.charCodeAt(0) <= 126) {
+                    currentString += char;
+                } else {
+                    if (currentString.length > 3) {
+                        printableStrings.push(currentString);
+                    }
+                    currentString = '';
+                }
+            }
+            if (currentString.length > 3) {
+                printableStrings.push(currentString);
+            }
+            
+            const results = document.getElementById('analysisResults');
+            results.innerHTML = `
+                <div class="binary-display">
+                    <strong>Extracted Text Strings:</strong><br>
+                    ${printableStrings.map(s => `"${s}"`).join('<br>')}
+                </div>
+            `;
+        }
+        
+        function showBinary() {
+            if (!imageData) {
+                analyzeImage();
+                setTimeout(showBinary, 100);
+                return;
+            }
+            
+            // Show last 200 bytes where the flag is hidden
+            const endData = imageData.slice(-200);
+            const hexString = Array.from(endData)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join(' ');
+            
+            const results = document.getElementById('analysisResults');
+            results.innerHTML = `
+                <div class="binary-display">
+                    <strong>Binary Data (last 200 bytes):</strong><br>
+                    ${hexString}<br><br>
+                    <strong>As ASCII:</strong><br>
+                    ${new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(endData)}
+                </div>
+            `;
+        }
+        
+        function checkFlag() {
+            const input = document.getElementById('flagInput').value.trim();
+            const correctFlag = 'CTF{st3g4n0gr4phy_m4st3r}';
+            
+            if (input === correctFlag) {
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('flagInput').style.background = 'rgba(0, 255, 0, 0.2)';
+            } else {
+                document.getElementById('flagInput').style.background = 'rgba(255, 0, 0, 0.2)';
+                setTimeout(() => {
+                    document.getElementById('flagInput').style.background = 'rgba(0, 0, 0, 0.7)';
+                }, 1000);
+            }
+        }
+        
+        function showHint() {
+            hintCount++;
+            if (hintCount >= 1) {
+                document.getElementById('hint2').style.display = 'block';
+            }
+            if (hintCount >= 2) {
+                document.getElementById('hint3').style.display = 'block';
+            }
+        }
+        
+        function toggleSolution() {
+            const solution = document.getElementById('solutionDiv');
+            solution.style.display = solution.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Initialize
+        window.onload = function() {
+            analyzeImage();
+        };
+    </script>
+</body>
+</html>
